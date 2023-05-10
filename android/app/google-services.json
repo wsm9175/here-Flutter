@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "602279951968",
+    "project_id": "here-flutter",
+    "storage_bucket": "here-flutter.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:602279951968:android:7736f528be37a430420d05",
+        "android_client_info": {
+          "package_name": "com.wsm9175.flutter.here.here"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "602279951968-fphp9fe7v02fh6rc3ikbhn7do8o9u79n.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBbXVIMkZC-qzU9-GZT2OYUVUN9GILM6lc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "602279951968-fphp9fe7v02fh6rc3ikbhn7do8o9u79n.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
