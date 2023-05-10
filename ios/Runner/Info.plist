@@ -47,5 +47,8 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<key>com.apple.developer.nfc.readersession.felica.systemcodes</key>
+    <key>NFCReaderUsageDescription</key>
+
 </dict>
 </plist>
