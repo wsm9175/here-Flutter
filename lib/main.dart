@@ -1,10 +1,10 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:here/firebase/firebase_realtime_database.dart';
 import 'package:here/screen/attendance_screen.dart';
-import 'package:here/screen/home_screen.dart';
+import 'package:here/screen/login_screen.dart';
 import 'firebase_options.dart';
-
-
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -14,9 +14,9 @@ void main() async {
   );
 
   runApp(MaterialApp(
-    initialRoute: '/',
+    initialRoute: '/login',
     routes: {
-      '/': (context) => HomeScreen(),
+      '/login': (context) => LoginScreen(),
       '/attendance': (context) => AttendanceScreen(),
     },
   ));

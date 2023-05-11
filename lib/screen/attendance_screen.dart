@@ -32,9 +32,9 @@ class _AttendanceScreenState extends State<AttendanceScreen>
                 return Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    AttendanceButton(onPressed: taggingNfc),
+                    _AttendanceButton(onPressed: taggingNfc),
                     SizedBox(height: 16.0),
-                    LeaveButton(onPressed: taggingNfc),
+                    _LeaveButton(onPressed: taggingNfc),
                   ],
                 );
               } else {
@@ -165,10 +165,10 @@ class _AttendanceScreenState extends State<AttendanceScreen>
   }
 }
 
-class AttendanceButton extends StatelessWidget {
+class _AttendanceButton extends StatelessWidget {
   final VoidCallback onPressed;
 
-  const AttendanceButton({
+  const _AttendanceButton({
     required this.onPressed,
     Key? key,
   }) : super(key: key);
@@ -191,10 +191,10 @@ class AttendanceButton extends StatelessWidget {
   }
 }
 
-class LeaveButton extends StatelessWidget {
+class _LeaveButton extends StatelessWidget {
   final VoidCallback onPressed;
 
-  const LeaveButton({
+  const _LeaveButton({
     required this.onPressed,
     Key? key,
   }) : super(key: key);
