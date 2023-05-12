@@ -3,6 +3,9 @@ import 'dart:io';
 import 'package:app_settings/app_settings.dart';
 import 'package:flutter/material.dart';
 import 'package:here/component/nfc_ios.dart';
+import 'package:here/component/nfc_module.dart';
+import 'package:here/component/timer.dart';
+import 'package:here/model/login_user.dart';
 import 'package:nfc_manager/nfc_manager.dart';
 import '../component/nfc_dialog_android.dart';
 
@@ -17,9 +20,13 @@ class AttendanceScreen extends StatefulWidget {
 
 class _AttendanceScreenState extends State<AttendanceScreen>
     with WidgetsBindingObserver {
+  final nfcModule = NfcModule();
+  final loginUser = LoginUser();
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.purple,
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(8.0),
@@ -30,11 +37,20 @@ class _AttendanceScreenState extends State<AttendanceScreen>
                 return const CircularProgressIndicator();
               } else if (snapshot.data!) {
                 return Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    _AttendanceButton(onPressed: taggingNfc),
-                    SizedBox(height: 16.0),
-                    _LeaveButton(onPressed: taggingNfc),
+                    const _TimeInfo(),
+                    Expanded(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          _LoginInfo(loginUser: loginUser),
+                          SizedBox(height: 24.0),
+                          _AttendanceButton(onPressed: taggingNfc),
+                          const SizedBox(height: 16.0),
+                          _LeaveButton(onPressed: taggingNfc),
+                        ],
+                      ),
+                    ),
                   ],
                 );
               } else {
@@ -90,7 +106,7 @@ class _AttendanceScreenState extends State<AttendanceScreen>
     } else {
       if (Platform.isIOS) {
         await Navigator.of(context).push(MaterialPageRoute(builder: (context) {
-          return IosSessionScreen(handleTag: handleTag);
+          return IosSessionScreen(handleTag: nfcModule.handleTag);
         }));
       } else {
         showDialog(
@@ -98,7 +114,7 @@ class _AttendanceScreenState extends State<AttendanceScreen>
           builder: (_) {
             return AndroidSessionDialog(
               'nfc 태그에 기기를 태깅해주세요.',
-              (tag) => handleTag(tag),
+              nfcModule.handleTag,
             );
           },
         );
@@ -112,8 +128,8 @@ class _AttendanceScreenState extends State<AttendanceScreen>
         await showDialog(
           context: context,
           builder: (context) => AlertDialog(
-            title: Text("오류"),
-            content: Text(
+            title: const Text("오류"),
+            content: const Text(
               "NFC를 지원하지 않는 기기이거나 일시적으로 비활성화 되어 있습니다.",
               style: TextStyle(color: Colors.black, fontSize: 16),
             ),
@@ -127,7 +143,7 @@ class _AttendanceScreenState extends State<AttendanceScreen>
               ),
               TextButton(
                 onPressed: () => Navigator.of(context).pop(),
-                child: Text(
+                child: const Text(
                   "확인",
                 ),
               ),
@@ -138,30 +154,79 @@ class _AttendanceScreenState extends State<AttendanceScreen>
       throw "NFC를 지원하지 않는 기기이거나 일시적으로 비활성화 되어 있습니다.";
     }
   }
+}
 
-  String handleTag(NfcTag tag) {
-    try {
-      final List<int> tempIntList;
+class _TimeInfo extends StatelessWidget {
+  const _TimeInfo({Key? key}) : super(key: key);
 
-      if (Platform.isIOS) {
-        tempIntList = List<int>.from(tag.data["mifare"]["identifier"]);
-      } else {
-        tempIntList =
-            List<int>.from(Ndef.from(tag)?.additionalData["identifier"]);
-      }
-      String id = "";
+  @override
+  Widget build(BuildContext context) {
+    return const Expanded(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.end,
+        children: [
+          Image(
+            image: AssetImage('asset/img/clock.png'),
+            width: 200.0,
+            height: 200.0,
+          ),
+          SizedBox(
+            height: 24.0,
+          ),
+          Clock(),
+        ],
+      ),
+    );
+  }
+}
 
-      tempIntList.forEach((element) {
-        id = id + element.toRadixString(16);
-      });
+class _LoginInfo extends StatelessWidget {
+  final LoginUser loginUser;
+  final textStyle = const TextStyle(
+    fontSize: 20.0,
+    color: Colors.white,
+  );
 
-      print(id);
+  const _LoginInfo({required this.loginUser, Key? key}) : super(key: key);
 
-      return id;
-    } catch (e) {
-      print(e);
-      throw "NFC 데이터를 가져올 수 없습니다.";
-    }
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        border: Border.all(
+          width: 1,
+          color: Colors.white,
+        ),
+        borderRadius: BorderRadius.circular(8.0),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text('로그인 정보',
+                style: textStyle.copyWith(
+                  fontWeight: FontWeight.w400,
+                )),
+            SizedBox(height: 8.0),
+            Text(
+              '성명 : ${loginUser.name}',
+              style: textStyle,
+            ),
+            SizedBox(height: 8.0),
+            Text(
+              '전화번호 : ${loginUser.phoneNumber}',
+              style: textStyle,
+            ),
+            SizedBox(height: 8.0),
+            Text(
+              '반 타입 : ${loginUser.classType}',
+              style: textStyle,
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
 
@@ -182,7 +247,15 @@ class _AttendanceButton extends StatelessWidget {
             height: 50.0,
             child: ElevatedButton(
               onPressed: onPressed,
-              child: Text("출 석"),
+              child: Text(
+                "출 석",
+                style: TextStyle(
+                  color: Colors.black,
+                ),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.white,
+              ),
             ),
           ),
         ),
@@ -208,7 +281,15 @@ class _LeaveButton extends StatelessWidget {
             height: 50.0,
             child: ElevatedButton(
               onPressed: onPressed,
-              child: Text("퇴 근"),
+              child: Text(
+                "퇴 근",
+                style: TextStyle(
+                  color: Colors.black,
+                ),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.white,
+              ),
             ),
           ),
         ),
