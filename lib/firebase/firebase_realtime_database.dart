@@ -11,7 +11,7 @@ class FirebaseRealtimeDatabase{
   }
 
 
-  void getUserInfo(String uid) async{
+  Future<DataSnapshot> getUserInfo(String uid) async{
     print('getUserInfo');
     _database.databaseURL = 'https://here-flutter-default-rtdb.asia-southeast1.firebasedatabase.app';
     final ref = _database.ref();
@@ -21,6 +21,7 @@ class FirebaseRealtimeDatabase{
     } else {
       print('No data available.');
     }
+    return snapshot;
   }
 }
 

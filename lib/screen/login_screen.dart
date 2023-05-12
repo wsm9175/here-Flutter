@@ -1,8 +1,12 @@
+import 'dart:math';
+import 'dart:ui';
+
+import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:google_sign_in/google_sign_in.dart';
 import 'package:here/firebase/firebase_login.dart';
 import 'package:here/firebase/firebase_realtime_database.dart';
+import 'package:here/model/login_user.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({Key? key}) : super(key: key);
@@ -12,6 +16,9 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
+  final FirebaseLogin firebaseLogin = FirebaseLogin();
+  final ValueNotifier<bool> _isLoading = ValueNotifier<bool>(false);
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -19,20 +26,30 @@ class _LoginScreenState extends State<LoginScreen> {
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(8.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.start,
+          child: Stack(
             children: [
-              const _TitleWidget(),
-              Expanded(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                      child: _loginButton('logo_google', login),
+              Column(
+                mainAxisAlignment: MainAxisAlignment.start,
+                children: [
+                  const _TitleWidget(),
+                  Expanded(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                          child: _loginButton('logo_google', login),
+                        ),
+                      ],
                     ),
-                  ],
-                ),
+                  ),
+                ],
+              ),
+              ValueListenableBuilder(
+                valueListenable: _isLoading,
+                builder: (BuildContext context, bool isLoading, Widget? child) {
+                  return isLoading ? _loadingProgress() : SizedBox.shrink();
+                },
               ),
             ],
           ),
@@ -44,7 +61,7 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget _loginButton(String path, VoidCallback onTap) {
     return Card(
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(8),
       ),
       child: InkWell(
         onTap: onTap,
@@ -59,11 +76,11 @@ class _LoginScreenState extends State<LoginScreen> {
                 height: 40.0,
               ),
               SizedBox(
-                width: 8.0,
+                width: 16.0,
               ),
               Text(
                 'Google 로그인',
-                style: TextStyle(fontSize: 25.0),
+                style: TextStyle(fontSize: 24.0),
               )
             ],
           ),
@@ -72,16 +89,61 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  void login() {
-    FirebaseLogin firebaseLogin = FirebaseLogin();
-    FirebaseRealtimeDatabase firebaseRealtimeDatabase = FirebaseRealtimeDatabase();
-    Future<UserCredential> future =  firebaseLogin.signInWithGoogle();
+  Widget _loadingProgress() {
+    return const Expanded(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              CircularProgressIndicator(),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
 
-    future.then((value) => {
-      firebaseRealtimeDatabase.getUserInfo(value.user!.uid)
-    }).catchError((error) =>{
-      print(error)
-    });
+  void login() {
+    _isLoading.value = true;
+    Future<UserCredential> future = firebaseLogin.signInWithGoogle();
+    future
+        .then((value) => {getUserInfo(value)})
+        .catchError((error) => {loginError()});
+  }
+
+  void getUserInfo(UserCredential credential) {
+    FirebaseRealtimeDatabase firebaseRealtimeDatabase = FirebaseRealtimeDatabase();
+    final userData = firebaseRealtimeDatabase.getUserInfo(credential.user!.uid);
+    userData
+        .then((value) => {
+              if (value.exists)
+                {settingUserInfo(value)}
+              else
+                {
+                  noUser()
+                }
+            })
+        .catchError((error) => {loginError()});
+  }
+
+  void settingUserInfo(DataSnapshot snapshot) {
+    LoginUser loginUser = LoginUser();
+    Map<dynamic, dynamic> value = snapshot.value as Map<dynamic, dynamic>;
+    loginUser.settingUserInfo(value, snapshot.key!);
+    print(loginUser.toString());
+    _isLoading.value = false;
+    Navigator.pushNamed(context, '/attendance');
+  }
+
+  void loginError() {
+    _isLoading.value = false;
+  }
+
+  void noUser() async{
+   firebaseLogin.signOut();
+    _isLoading.value = false;
   }
 }
 
@@ -104,33 +166,12 @@ class _TitleWidget extends StatelessWidget {
           Text(
             '출석 관리 앱',
             style: TextStyle(
-              fontSize: 30.0,
+              fontSize: 32.0,
               color: Colors.white,
             ),
           )
         ],
       ),
-    );
-  }
-}
-
-
-class _LoginButton extends StatelessWidget {
-  const _LoginButton({Key? key}) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Expanded(
-          child: ElevatedButton(
-            onPressed: () {
-              Navigator.pushNamed(context, '/attendance');
-            },
-            child: Text('로그인'),
-          ),
-        ),
-      ],
     );
   }
 }
