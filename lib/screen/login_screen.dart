@@ -5,8 +5,9 @@ import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:here/firebase/firebase_login.dart';
-import 'package:here/firebase/firebase_realtime_database.dart';
 import 'package:here/model/login_user.dart';
+
+import '../firebase/firebase_realtime_database.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({Key? key}) : super(key: key);
@@ -79,7 +80,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 width: 16.0,
               ),
               Text(
-                'Google 로그인',
+                'Google로 시작하기',
                 style: TextStyle(fontSize: 24.0),
               )
             ],
@@ -112,16 +113,12 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   void getUserInfo(UserCredential credential) {
-    FirebaseRealtimeDatabase firebaseRealtimeDatabase = FirebaseRealtimeDatabase();
+    FirebaseRealtimeDatabase firebaseRealtimeDatabase =
+        FirebaseRealtimeDatabase();
     final userData = firebaseRealtimeDatabase.getUserInfo(credential.user!.uid);
     userData
         .then((value) => {
-              if (value.exists)
-                {settingUserInfo(value)}
-              else
-                {
-                  noUser()
-                }
+              if (value.exists) {settingUserInfo(value)} else {noUser()}
             })
         .catchError((error) => {loginError()});
   }
@@ -139,9 +136,10 @@ class _LoginScreenState extends State<LoginScreen> {
     _isLoading.value = false;
   }
 
-  void noUser() async{
-   firebaseLogin.signOut();
+  void noUser() async {
+    firebaseLogin.signOut();
     _isLoading.value = false;
+    Navigator.pushNamed(context, '/register');
   }
 }
 
@@ -162,9 +160,9 @@ class _TitleWidget extends StatelessWidget {
             ),
           ),
           Text(
-            '출석 관리 앱',
+            '출석 관리를 쉽게',
             style: TextStyle(
-              fontSize: 32.0,
+              fontSize: 24.0,
               color: Colors.white,
             ),
           )

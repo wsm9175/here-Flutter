@@ -13,8 +13,8 @@ class Clock extends StatelessWidget {
           return Text(
             DateFormat('yyyy/MM/dd - HH:mm:ss').format(DateTime.now()),
             style: const TextStyle(
-              fontSize: 30.0,
-              color: Colors.white,
+              fontSize: 24.0,
+              color: Colors.black,
             ),
           );
         },

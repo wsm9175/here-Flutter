@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:nfc_manager/nfc_manager.dart';
+import 'package:lottie/lottie.dart';
 
 
 class AndroidSessionDialog extends StatefulWidget {
@@ -56,12 +57,20 @@ class _AndroidSessionDialogState extends State<AndroidSessionDialog> {
                 ? "성공"
                 : "준비",
       ),
-      content: Text(
-        _errorMessage?.isNotEmpty == true
-            ? _errorMessage!
-            : _alertMessage?.isNotEmpty == true
-                ? _alertMessage!
-                : widget.alertMessage,
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            _errorMessage?.isNotEmpty == true
+                ? _errorMessage!
+                : _alertMessage?.isNotEmpty == true
+                    ? _alertMessage!
+                    : widget.alertMessage,
+          ),
+          Lottie.asset(
+              'asset/img/nfc_lottie.json'
+          ),
+        ],
       ),
       actions: <Widget>[
         TextButton(
