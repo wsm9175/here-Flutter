@@ -3,9 +3,11 @@
 <plist version="1.0">
 <dict>
 	<key>CLIENT_ID</key>
-	<string>602279951968-uhs23tph6i1men06fig9krlsa1f70m7c.apps.googleusercontent.com</string>
+	<string>602279951968-j8n9ilp227dt8rb6nreosm6li4s5c1ah.apps.googleusercontent.com</string>
 	<key>REVERSED_CLIENT_ID</key>
-	<string>com.googleusercontent.apps.602279951968-uhs23tph6i1men06fig9krlsa1f70m7c</string>
+	<string>com.googleusercontent.apps.602279951968-j8n9ilp227dt8rb6nreosm6li4s5c1ah</string>
+	<key>ANDROID_CLIENT_ID</key>
+	<string>602279951968-14a8ri47u3lnr7oprh4h878o3ioa82us.apps.googleusercontent.com</string>
 	<key>API_KEY</key>
 	<string>AIzaSyCpFatGLoioZHosZHFwYADtsvT5gUg5kw8</string>
 	<key>GCM_SENDER_ID</key>
@@ -13,7 +15,7 @@
 	<key>PLIST_VERSION</key>
 	<string>1</string>
 	<key>BUNDLE_ID</key>
-	<string>com.wsm9175.flutter.here.here</string>
+	<string>com.wsm9175.flutter.here</string>
 	<key>PROJECT_ID</key>
 	<string>here-flutter</string>
 	<key>STORAGE_BUCKET</key>
@@ -29,6 +31,8 @@
 	<key>IS_SIGNIN_ENABLED</key>
 	<true></true>
 	<key>GOOGLE_APP_ID</key>
-	<string>1:602279951968:ios:1dfd9b8500597376420d05</string>
+	<string>1:602279951968:ios:3ddea8bd90b49510420d05</string>
+	<key>DATABASE_URL</key>
+	<string>https://here-flutter-default-rtdb.asia-southeast1.firebasedatabase.app</string>
 </dict>
 </plist>
