@@ -1,12 +1,15 @@
 import 'dart:io';
 
 import 'package:app_settings/app_settings.dart';
+import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:here/component/nfc_ios.dart';
 import 'package:here/component/nfc_module.dart';
 import 'package:here/component/timer.dart';
+import 'package:here/firebase/firebase_realtime_database.dart';
 import 'package:here/model/login_user.dart';
+import 'package:here/model/tag_data.dart';
 import 'package:here/model/today_attendance_status.dart';
 import 'package:nfc_manager/nfc_manager.dart';
 import '../component/nfc_dialog_android.dart';
@@ -24,12 +27,12 @@ class _AttendanceScreenState extends State<AttendanceScreen>
     with WidgetsBindingObserver {
   final nfcModule = NfcModule();
   final loginUser = LoginUser();
+  TodayAttendanceStatus todayAttendanceStatus =
+      TodayAttendanceStatus(false, false);
+  final ValueNotifier<bool> _isLoading = ValueNotifier<bool>(false);
 
   @override
   Widget build(BuildContext context) {
-    TodayAttendanceStatus todayAttendanceStatus =
-        TodayAttendanceStatus(false, false);
-
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.purple,
@@ -50,37 +53,40 @@ class _AttendanceScreenState extends State<AttendanceScreen>
               if (!snapshot.hasData) {
                 return const CircularProgressIndicator();
               } else if (snapshot.data!) {
-                return Column(
+                return Stack(
                   children: [
-                    Expanded(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          _AttendanceStatus(
-                              todayAttendanceStatus: todayAttendanceStatus),
-                          _LoginInfo(loginUser: loginUser),
-                          const _TimeInfo(),
-                        ],
-                      ),
+                    Column(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        _AttendanceButton(
+                          onPressed: taggingNfc,
+                          doAttendance:
+                          todayAttendanceStatus.doAttendance,
+                        ),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            _LoginInfo(loginUser: loginUser),
+                            SizedBox(height: 8.0),
+                            const _TimeInfo(),
+                          ],
+                        ),
+                        _LeaveButton(
+                          onPressed: taggingNfc,
+                          doLeave: todayAttendanceStatus.doLeave,
+                          doAttendance:
+                          todayAttendanceStatus.doAttendance,
+                        ),
+                      ],
                     ),
-                    Expanded(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const SizedBox(height: 24.0),
-                          _AttendanceButton(
-                            onPressed: taggingNfc,
-                            doAttendance: todayAttendanceStatus.doAttendance,
-                          ),
-                          const SizedBox(height: 16.0),
-                          _LeaveButton(
-                            onPressed: taggingNfc,
-                            doLeave: todayAttendanceStatus.doLeave,
-                            doAttendance: todayAttendanceStatus.doAttendance,
-                          ),
-                        ],
-                      ),
+                    ValueListenableBuilder(
+                      valueListenable: _isLoading,
+                      builder: (BuildContext context, bool isLoading,
+                          Widget? child) {
+                        return isLoading
+                            ? _loadingProgress()
+                            : SizedBox.shrink();
+                      },
                     ),
                   ],
                 );
@@ -105,6 +111,7 @@ class _AttendanceScreenState extends State<AttendanceScreen>
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    getTodayAttendanceInfo();
   }
 
   @override
@@ -117,7 +124,6 @@ class _AttendanceScreenState extends State<AttendanceScreen>
   void didChangeAppLifecycleState(AppLifecycleState state) {
     switch (state) {
       case AppLifecycleState.resumed:
-        setState(() {});
         break;
       case AppLifecycleState.inactive:
         // TODO: Handle this case.
@@ -131,13 +137,30 @@ class _AttendanceScreenState extends State<AttendanceScreen>
     }
   }
 
+  Widget _loadingProgress() {
+    return const Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            CircularProgressIndicator(),
+          ],
+        ),
+      ],
+    );
+  }
+
   void taggingNfc() async {
     if (!await NfcManager.instance.isAvailable()) {
       checkNfc();
     } else {
       if (Platform.isIOS) {
         await Navigator.of(context).push(MaterialPageRoute(builder: (context) {
-          return IosSessionScreen(handleTag: nfcModule.handleTag);
+          return IosSessionScreen(
+            handleTag: nfcModule.handleTag,
+            doAttendance: getFirebaseTagList,
+          );
         }));
       } else {
         showDialog(
@@ -146,6 +169,7 @@ class _AttendanceScreenState extends State<AttendanceScreen>
             return AndroidSessionDialog(
               'nfc 태그에 기기를 태깅해주세요.',
               nfcModule.handleTag,
+              getFirebaseTagList,
             );
           },
         );
@@ -154,6 +178,7 @@ class _AttendanceScreenState extends State<AttendanceScreen>
   }
 
   void checkNfc() async {
+    print('checkNfc');
     if (!(isNfcAvaliable)) {
       if (Platform.isAndroid) {
         await showDialog(
@@ -184,6 +209,86 @@ class _AttendanceScreenState extends State<AttendanceScreen>
       }
       throw "NFC를 지원하지 않는 기기이거나 일시적으로 비활성화 되어 있습니다.";
     }
+  }
+
+  void getFirebaseTagList(String tagId) {
+    _isLoading.value = true;
+    // get tagId From Firebase
+    FirebaseRealtimeDatabase()
+        .getTagList()
+        .then((value) => {settingTagData(value, tagId)})
+        .catchError((error) => {print(error)});
+    // get
+  }
+
+  settingTagData(DataSnapshot snapshot, String tagId) {
+    Map<dynamic, dynamic> valueList = snapshot.value as Map<dynamic, dynamic>;
+    List<TagData> dataList = <TagData>[];
+
+    for (String key in valueList.keys) {
+      dataList.add(TagData(valueList[key], key));
+    }
+
+    bool check = false;
+
+    dataList.forEach((element) {
+      print('element key : ${element.key} tagId : ${tagId}');
+      if (element.key == tagId) check = true;
+    });
+
+    if (check) {
+      // 출석
+      FirebaseRealtimeDatabase()
+          .doAttendance(!todayAttendanceStatus.doAttendance)
+          .then((value) => {
+                setState(() {
+                  if (!todayAttendanceStatus.doAttendance) {
+                    todayAttendanceStatus = TodayAttendanceStatus(true, false);
+                    showToast('출근을 완료했습니다.');
+                  } else {
+                    todayAttendanceStatus = TodayAttendanceStatus(true, true);
+                    showToast('퇴근을 완료했습니다.');
+                  }
+                  _isLoading.value = false;
+                })
+              })
+          .catchError((error) => showToast('오류가 발생했습니다.'));
+    } else {
+      // 잘못된 태그
+      showToast('잘못된 태그입니다.');
+      _isLoading.value = false;
+    }
+  }
+
+  void getTodayAttendanceInfo() {
+    _isLoading.value = true;
+    FirebaseRealtimeDatabase()
+        .getTodayAttendanceInfo()
+        .then((value) => checkMyAttendance(value))
+        .catchError((error) {
+      print(error);
+      _isLoading.value = false;
+    });
+  }
+
+  void checkMyAttendance(DataSnapshot snapshot) {
+    Map<dynamic, dynamic> valueList = snapshot.value as Map<dynamic, dynamic>;
+
+    bool doAttendance = false;
+    bool doLeave = false;
+
+    for (String key in valueList.keys) {
+      if (valueList[key]['studentUid'] == LoginUser().uid) {
+        if (valueList[key]['attendance'] == true)
+          doAttendance = true;
+        else
+          doLeave = true;
+      }
+    }
+    setState(() {
+      todayAttendanceStatus = TodayAttendanceStatus(doAttendance, doLeave);
+      _isLoading.value = false;
+    });
   }
 }
 
@@ -288,15 +393,11 @@ class _TimeInfo extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return const Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.max,
+      mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        /*Image(
-          image: AssetImage('asset/img/clock.png'),
-          width: 200.0,
-          height: 200.0,
-        )*/
         Text(
-          '시간을 확인해주세요',
+          '현재 시간을 확인해주세요',
           style: TextStyle(fontSize: 24.0),
         ),
         SizedBox(
@@ -311,7 +412,7 @@ class _TimeInfo extends StatelessWidget {
 class _LoginInfo extends StatelessWidget {
   final LoginUser loginUser;
   final textStyle = const TextStyle(
-    fontSize: 20.0,
+    fontSize: 28.0,
     color: Colors.black,
   );
 
@@ -320,37 +421,13 @@ class _LoginInfo extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      decoration: BoxDecoration(
-        border: Border.all(
-          width: 1,
-          color: Colors.black,
-        ),
-        borderRadius: BorderRadius.circular(8.0),
-      ),
       child: Padding(
         padding: const EdgeInsets.all(8.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
+        child: Row(
+          mainAxisSize: MainAxisSize.max,
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Text('로그인 정보',
-                style: textStyle.copyWith(
-                  fontWeight: FontWeight.w400,
-                )),
-            SizedBox(height: 8.0),
-            Text(
-              '성명 : ${loginUser.name}',
-              style: textStyle,
-            ),
-            SizedBox(height: 8.0),
-            Text(
-              '전화번호 : ${loginUser.phoneNumber}',
-              style: textStyle,
-            ),
-            SizedBox(height: 8.0),
-            Text(
-              '반 타입 : ${loginUser.classType}',
-              style: textStyle,
-            ),
+            Text('${loginUser.name}님', style: textStyle,)
           ],
         ),
       ),
@@ -374,20 +451,23 @@ class _AttendanceButton extends StatelessWidget {
       children: [
         Expanded(
           child: SizedBox(
-            height: 100.0,
+            height: MediaQuery.of(context).size.height * 0.2,
             child: OutlinedButton(
               onPressed: doAttendance
                   ? () {
-                      showToast('오늘 출근 처리 하셨습니다 :)');
+                      showToast('오늘 입실 처리 하셨습니다 :)');
                     }
                   : onPressed,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.white,
+              style: OutlinedButton.styleFrom(
+                backgroundColor: doAttendance ? Colors.blue : Colors.white,
+                side: BorderSide(width: 3.0, color: Colors.blue)
               ),
-              child: const Text(
-                "출 근",
+              child: Text(
+                doAttendance ? '입  실  완  료' : '입  실',
                 style: TextStyle(
-                  color: Colors.black,
+                  color: doAttendance ? Colors.white : Colors.black,
+                  fontSize: 50.0,
+                  fontWeight: FontWeight.w700,
                 ),
               ),
             ),
@@ -416,24 +496,27 @@ class _LeaveButton extends StatelessWidget {
       children: [
         Expanded(
           child: SizedBox(
-            height: 100.0,
+            height: MediaQuery.of(context).size.height * 0.2,
             child: OutlinedButton(
               onPressed: doLeave
                   ? () {
-                      showToast('오늘 퇴근 처리 하셨습니다 :)');
+                      showToast('오늘 퇴실 처리 하셨습니다 :)');
                     }
                   : doAttendance
                       ? onPressed
                       : () {
-                          showToast('출근 처리를 진행해주세요!');
+                          showToast('입실 처리를 진행해주세요!');
                         },
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.white,
+                backgroundColor: doLeave ? Colors.yellow : Colors.white,
+                side: BorderSide(width: 3.0, color: Colors.yellow),
               ),
-              child: const Text(
-                "퇴 근",
+              child: Text(
+                doLeave ? '퇴  실  완  료': "퇴  실",
                 style: TextStyle(
-                  color: Colors.black,
+                  color: doLeave ? Colors.white : Colors.black,
+                  fontSize: 50.0,
+                  fontWeight: FontWeight.w700,
                 ),
               ),
             ),

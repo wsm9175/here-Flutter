@@ -46,6 +46,8 @@ dependencies:
   fluttertoast: ^8.2.1
   lottie: ^2.3.2
   device_info_plus: ^3.2.4
+  kakao_flutter_sdk_user: ^1.4.1 # 카카오 로그인
+  http: ^0.13.6
 
 dev_dependencies:
   flutter_test:

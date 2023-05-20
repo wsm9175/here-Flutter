@@ -3,6 +3,7 @@ class LoginUser {
   late String name;
   late String phoneNumber;
   late String classType;
+  late String deviceUid;
 
   static final LoginUser _instance = LoginUser._privateConstructor();
 
@@ -17,6 +18,7 @@ class LoginUser {
     name = map['name'];
     phoneNumber = map['phoneNumber'];
     classType = map['classType'];
+    deviceUid = map['deviceId'];
   }
 
   void logout(){

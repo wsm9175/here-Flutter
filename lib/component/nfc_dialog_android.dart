@@ -1,14 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:here/model/nfc_data.dart';
 import 'package:nfc_manager/nfc_manager.dart';
 import 'package:lottie/lottie.dart';
 
-
 class AndroidSessionDialog extends StatefulWidget {
-  const AndroidSessionDialog(this.alertMessage, this.handleTag);
-
   final String alertMessage;
+  final NfcData Function(NfcTag tag) handleTag;
+  final void Function(String tagId) doAttendance;
 
-  final String Function(NfcTag tag) handleTag;
+  const AndroidSessionDialog(
+      this.alertMessage, this.handleTag, this.doAttendance);
 
   @override
   State<StatefulWidget> createState() => _AndroidSessionDialogState();
@@ -18,7 +19,7 @@ class _AndroidSessionDialogState extends State<AndroidSessionDialog> {
   String? _alertMessage;
   String? _errorMessage;
 
-  String? _result;
+  NfcData? _result;
 
   @override
   void initState() {
@@ -27,15 +28,16 @@ class _AndroidSessionDialogState extends State<AndroidSessionDialog> {
     NfcManager.instance.startSession(
       onDiscovered: (NfcTag tag) async {
         try {
+          await NfcManager.instance.stopSession();
           _result = widget.handleTag(tag);
 
-          await NfcManager.instance.stopSession();
-
-          setState(() => _alertMessage = "NFC 태그를 인식하였습니다.");
+          _alertMessage = "NFC 태그를 인식하였습니다. 처리중..";
+          widget.doAttendance(_result!.message);
         } catch (e) {
           await NfcManager.instance.stopSession();
-
           setState(() => _errorMessage = '$e');
+        } finally{
+          Navigator.pop(context);
         }
       },
     ).catchError((e) => setState(() => _errorMessage = '$e'));
@@ -67,9 +69,7 @@ class _AndroidSessionDialogState extends State<AndroidSessionDialog> {
                     ? _alertMessage!
                     : widget.alertMessage,
           ),
-          Lottie.asset(
-              'asset/img/nfc_lottie.json'
-          ),
+          Lottie.asset('asset/img/nfc_lottie.json'),
         ],
       ),
       actions: <Widget>[
