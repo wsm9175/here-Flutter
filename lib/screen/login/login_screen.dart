@@ -200,7 +200,7 @@ class _TitleWidget extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Text(
-            'HERE',
+            'Here',
             style: TextStyle(
               fontSize: 100.0,
               color: Colors.white,

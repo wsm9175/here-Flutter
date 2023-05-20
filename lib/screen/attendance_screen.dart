@@ -465,7 +465,7 @@ class _AttendanceButton extends StatelessWidget {
               child: Text(
                 doAttendance ? '입  실  완  료' : '입  실',
                 style: TextStyle(
-                  color: doAttendance ? Colors.white : Colors.black,
+                  color: Colors.black,
                   fontSize: 50.0,
                   fontWeight: FontWeight.w700,
                 ),
@@ -514,7 +514,7 @@ class _LeaveButton extends StatelessWidget {
               child: Text(
                 doLeave ? '퇴  실  완  료': "퇴  실",
                 style: TextStyle(
-                  color: doLeave ? Colors.white : Colors.black,
+                  color: Colors.black,
                   fontSize: 50.0,
                   fontWeight: FontWeight.w700,
                 ),

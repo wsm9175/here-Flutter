@@ -80,6 +80,5 @@ class FirebaseRealtimeDatabase {
       'name' : name,
       'phoneNumber' : phoneNumber,
     });
-
   }
 }
