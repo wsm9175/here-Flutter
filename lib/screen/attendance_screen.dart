@@ -244,10 +244,10 @@ class _AttendanceScreenState extends State<AttendanceScreen>
                 setState(() {
                   if (!todayAttendanceStatus.doAttendance) {
                     todayAttendanceStatus = TodayAttendanceStatus(true, false);
-                    showToast('출근을 완료했습니다.');
+                    showToast('입실을 완료했습니다.');
                   } else {
                     todayAttendanceStatus = TodayAttendanceStatus(true, true);
-                    showToast('퇴근을 완료했습니다.');
+                    showToast('퇴실을 완료했습니다.');
                   }
                   _isLoading.value = false;
                 })

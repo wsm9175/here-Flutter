@@ -48,6 +48,8 @@ dependencies:
   device_info_plus: ^3.2.4
   kakao_flutter_sdk_user: ^1.4.1 # 카카오 로그인
   http: ^0.13.6
+  sign_in_with_apple: ^4.3.0
+  social_login_buttons: ^1.0.7
 
 dev_dependencies:
   flutter_test:

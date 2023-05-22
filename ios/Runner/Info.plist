@@ -32,13 +32,18 @@
 				<string>com.googleusercontent.apps.602279951968-j8n9ilp227dt8rb6nreosm6li4s5c1ah</string>
 			</array>
 		</dict>
-		<dict/>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleURLIconFile</key>
+			<string></string>
+		</dict>
 		<dict>
 			<key>CFBundleTypeRole</key>
 			<string>Editor</string>
 			<key>CFBundleURLSchemes</key>
 			<array>
-				<string>kakao	2ac526f273bf0503b498be5a39204865</string>
+				<string>kakao2ac526f273bf0503b498be5a39204865</string>
 			</array>
 		</dict>
 	</array>

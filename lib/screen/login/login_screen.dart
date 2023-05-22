@@ -1,5 +1,5 @@
+import 'dart:io';
 import 'dart:ui';
-
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -9,6 +9,7 @@ import 'package:here/firebase/firebase_login.dart';
 import 'package:here/kakao/kakao_login.dart';
 import 'package:here/model/login_user.dart';
 import 'package:here/screen/login/login_view_model.dart';
+import 'package:social_login_buttons/social_login_buttons.dart';
 
 import '../../firebase/firebase_realtime_database.dart';
 
@@ -42,7 +43,13 @@ class _LoginScreenState extends State<LoginScreen> {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         _loginButton('logo_google', login),
-                        SizedBox(height: 16.0,),
+                        SizedBox(
+                          height: 16.0,
+                        ),
+                        _appleLoginButton(),
+                        SizedBox(
+                          height: 16.0,
+                        ),
                         _kakaoLoginButton(),
                       ],
                     ),
@@ -63,64 +70,34 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Widget _loginButton(String path, VoidCallback onTap) {
-    return InkWell(
-      onTap: onTap,
-      child: Container(
-        width: MediaQuery.of(context).size.width * 6.0,
-        height: MediaQuery.of(context).size.height * 0.07,
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(10),
-          color: Colors.white,
-        ),
-        child: const Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Image(
-              image: AssetImage('asset/img/logo_google.png'),
-              width: 40.0,
-              height: 40.0,
-            ),
-            SizedBox(
-              width: 16.0,
-            ),
-            Text(
-              'Google로 시작하기',
-              style: TextStyle(fontSize: 24.0),
-            )
-          ],
-        ),
-      ),
+    return SocialLoginButton(
+      buttonType: SocialLoginButtonType.google,
+      onPressed: onTap,
     );
   }
 
-  Widget _kakaoLoginButton(){
-    return InkWell(
-      onTap: () async{
-        await viewModel.loginKakao(settingUserInfo, noUser, nowLoading, noLoading);
-      },
-      child: Container(
-        width: MediaQuery.of(context).size.width * 6.0,
-        height: MediaQuery.of(context).size.height * 0.07,
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(10),
-          color: Colors.yellow,
-        ),
-        child: const Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.chat_bubble, color: Colors.black54, size: 30.0,),
-            SizedBox(width: 16,),
-            Text(
-              '카카오로 시작하기',
-              style: TextStyle(
-                fontSize: 24,
-              ),
-            ),
-          ],
-        ),
-      ),
+  Widget _kakaoLoginButton() {
+    return SocialLoginButton(
+      backgroundColor: Colors.white,
+      text: 'Sign in with Kakao',
+      textColor: Colors.black,
+      imagePath: 'asset/img/kakao_logo.png',
+      onPressed: () async{
+        await viewModel.loginKakao(
+            settingUserInfo, noUser, nowLoading, noLoading);
+      }, buttonType: SocialLoginButtonType.generalLogin,
     );
+  }
 
+  Widget _appleLoginButton() {
+    return SocialLoginButton(
+      buttonType: SocialLoginButtonType.apple,
+      onPressed: () {
+        if (Platform.isAndroid)
+          showToast('현재 안드로이드 기기에서 \n애플 로그인은 지원되지 않습니다.');
+        else if (Platform.isIOS) appleLogin();
+      },
+    );
   }
 
   Widget _loadingProgress() {
@@ -137,13 +114,24 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  void login() async{
+  void login() async {
     _isLoading.value = true;
-    if(FirebaseAuth.instance.currentUser != null) await firebaseLogin.signOut();
+    if (FirebaseAuth.instance.currentUser != null)
+      await firebaseLogin.signOut();
 
     Future<UserCredential> future = firebaseLogin.signInWithGoogle();
     future
         .then((value) => {getUserInfo(value)})
+        .catchError((error) => {loginError()});
+  }
+
+  void appleLogin() async {
+    print('apple login');
+    _isLoading.value = true;
+    if (FirebaseAuth.instance.currentUser != null) await firebaseLogin.signOut();
+    Future<UserCredential?> future = firebaseLogin.signInWithApple();
+    future
+        .then((value) => {getUserInfo(value!)})
         .catchError((error) => {loginError()});
   }
 
@@ -158,13 +146,13 @@ class _LoginScreenState extends State<LoginScreen> {
         .catchError((error) => {loginError()});
   }
 
-  void settingUserInfo(DataSnapshot snapshot) async{
+  void settingUserInfo(DataSnapshot snapshot) async {
     LoginUser loginUser = LoginUser();
     Map<dynamic, dynamic> value = snapshot.value as Map<dynamic, dynamic>;
     loginUser.settingUserInfo(value, snapshot.key!);
     print(loginUser.toString());
     _isLoading.value = false;
-    if(loginUser.deviceUid != await getDeviceUniqueId()){
+    if (loginUser.deviceUid != await getDeviceUniqueId()) {
       FirebaseLogin().signOut();
       showToast('최초 가입한 기기가 아닙니다. 관리자에게 문의해주세요');
       return;
@@ -181,11 +169,11 @@ class _LoginScreenState extends State<LoginScreen> {
     Navigator.pushNamed(context, '/register');
   }
 
-  nowLoading(){
+  nowLoading() {
     _isLoading.value = true;
   }
 
-  noLoading(){
+  noLoading() {
     _isLoading.value = false;
   }
 }
@@ -229,4 +217,3 @@ void showToast(String message) {
       textColor: Colors.white,
       fontSize: 16.0);
 }
-
