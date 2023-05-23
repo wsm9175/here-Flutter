@@ -81,4 +81,9 @@ class FirebaseRealtimeDatabase {
       'phoneNumber' : phoneNumber,
     });
   }
+
+  Future<void> revoke() async{
+    final ref = _database.ref('userStudent/${LoginUser().uid}');
+    return await ref.remove();
+  }
 }

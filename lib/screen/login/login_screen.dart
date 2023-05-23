@@ -157,7 +157,7 @@ class _LoginScreenState extends State<LoginScreen> {
       showToast('최초 가입한 기기가 아닙니다. 관리자에게 문의해주세요');
       return;
     }
-    Navigator.pushNamed(context, '/attendance');
+    Navigator.pushReplacementNamed(context, '/attendance');
   }
 
   void loginError() {
@@ -166,7 +166,12 @@ class _LoginScreenState extends State<LoginScreen> {
 
   void noUser() async {
     _isLoading.value = false;
-    Navigator.pushNamed(context, '/register');
+    print('noUser');
+    try{
+      Navigator.pushNamed(context, '/register', arguments: {'fulName' : firebaseLogin.fulName??='', 'email' : firebaseLogin.email??= ''});
+    }catch(error){
+      print(error);
+    }
   }
 
   nowLoading() {

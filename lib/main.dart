@@ -19,6 +19,7 @@ void main() async {
   SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
 
   runApp(MaterialApp(
+    debugShowCheckedModeBanner: false,
     initialRoute: '/login',
     routes: {
       '/login': (context) => LoginScreen(),

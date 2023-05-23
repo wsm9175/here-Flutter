@@ -5,6 +5,8 @@ import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 
 class FirebaseLogin{
   User? user;
+  String? email;
+  String? fulName;
 
   Future<UserCredential> signInWithGoogle() async {
     // Trigger the authentication flow
@@ -33,10 +35,20 @@ class FirebaseLogin{
         ],
       );
 
+      print(appleCredential);
+
+      try{
+        email = appleCredential.email;
+        fulName = appleCredential.familyName! + appleCredential.givenName!;
+      }catch(error){
+        print(error);
+      }
+
       final oauthCredential = OAuthProvider("apple.com").credential(
         idToken: appleCredential.identityToken,
         accessToken: appleCredential.authorizationCode,
       );
+
 
       return await FirebaseAuth.instance.signInWithCredential(oauthCredential);
     } catch(error) {
@@ -49,6 +61,11 @@ class FirebaseLogin{
   Future<void> signOut() async{
     await GoogleSignIn().signOut();
     await FirebaseAuth.instance.signOut();
+    LoginUser().logout();
+  }
+
+  Future<void> revoke() async{
+    FirebaseAuth.instance.currentUser?.delete();
     LoginUser().logout();
   }
 

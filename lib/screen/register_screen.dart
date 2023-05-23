@@ -23,9 +23,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
   String? _phoneNumber;
   String? _classType;
 
-
   @override
   Widget build(BuildContext context) {
+    final arguments = (ModalRoute.of(context)?.settings.arguments ??
+        <String, dynamic>{}) as Map;
+    _name = arguments['fulName'];
+
     return Scaffold(
       resizeToAvoidBottomInset: false,
       appBar: AppBar(
@@ -51,17 +54,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     SizedBox(
                       height: 32.0,
                     ),
-                    CustomTextField(
-                      labelText: '이름',
-                      isString: true,
-                      validator: (val) {
-                        if (val.length < 1) {
-                          return '1자 이상 입력해주세요';
-                        }
-                        _name = val;
-                        return null;
-                      },
-                    ),
+                    renderNameWidget(),
                     SizedBox(
                       height: 20.0,
                     ),
@@ -84,15 +77,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       child: Text('class 선택'),
                     ),*/
                     CustomTextField(
-                        labelText: '클래스 타입',
-                        isString: true,
-                        validator: (val) {
-                          if (val.length < 1) {
-                            return '1자 이상 입력해주세요';
-                          }
-                          _classType = val;
-                          return null;
-                        },
+                      labelText: '클래스 타입',
+                      isString: true,
+                      validator: (val) {
+                        if (val.length < 1) {
+                          return '1자 이상 입력해주세요';
+                        }
+                        _classType = val;
+                        return null;
+                      },
                     ),
                     Expanded(
                       child: Column(
@@ -146,26 +139,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
     );
   }
 
- /* void showPicker() async {
-    await showCupertinoModalPopup(
-      context: context,
-      builder: (_) => Container(
-        height: 200.0,
-        child: CupertinoPicker(
-          children: _classTypeList.map((e) => Text(e)).toList(),
-          itemExtent: 28.0,
-          scrollController: FixedExtentScrollController(initialItem: _result),
-          onSelectedItemChanged: (int index) {
-            _result = index;
-          },
-          magnification: 1.22,
-          squeeze: 1.2,
-          useMagnifier: true,
-        ),
-      ),
-    );
-  }*/
-
   void getSign() async {
     print('getSign');
     _isLoading.value = true;
@@ -192,6 +165,27 @@ class _RegisterScreenState extends State<RegisterScreen> {
         showToast('에러가 발생했습니다.');
       });
     }
+  }
+
+  Widget renderNameWidget() {
+    return _name != ''
+        ? Text(
+            '입력된 이름 : '+_name!,
+            style: TextStyle(
+              fontSize: 16.0
+            ),
+          )
+        : CustomTextField(
+            labelText: '이름',
+            isString: true,
+            validator: (val) {
+              if (val.length < 1) {
+                return '1자 이상 입력해주세요';
+              }
+              _name = val;
+              return null;
+            },
+          );
   }
 }
 

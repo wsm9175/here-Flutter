@@ -1,12 +1,14 @@
 import 'dart:io';
 
 import 'package:app_settings/app_settings.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:here/component/nfc_ios.dart';
 import 'package:here/component/nfc_module.dart';
 import 'package:here/component/timer.dart';
+import 'package:here/firebase/firebase_login.dart';
 import 'package:here/firebase/firebase_realtime_database.dart';
 import 'package:here/model/login_user.dart';
 import 'package:here/model/tag_data.dart';
@@ -43,6 +45,36 @@ class _AttendanceScreenState extends State<AttendanceScreen>
           ),
         ),
       ),
+      drawer: Drawer(
+        child: ListView(
+          padding: EdgeInsets.zero,
+          children: [
+            UserAccountsDrawerHeader(
+              accountEmail: Text(LoginUser().phoneNumber),
+              accountName: Text(LoginUser().name),
+              decoration: BoxDecoration(
+                  color: Colors.purple,
+                  borderRadius: BorderRadius.only(
+                    bottomLeft: Radius.circular(40),
+                    bottomRight: Radius.circular(40),
+                  )),
+            ),
+            ListTile(
+              title: Text('로그아웃'),
+              onTap: () async{
+                await FirebaseLogin().signOut().then((value) => Navigator.of(context).pushReplacementNamed('/login'));
+              },
+            ),
+            ListTile(
+              title: Text('회원탈퇴'),
+              onTap: () async{
+                await FirebaseRealtimeDatabase().revoke();
+                await FirebaseLogin().revoke().then((value) => Navigator.of(context).pushReplacementNamed('/login'));
+              },
+            )
+          ],
+        ),
+      ),
       backgroundColor: Colors.white,
       body: SafeArea(
         child: Padding(
@@ -60,8 +92,7 @@ class _AttendanceScreenState extends State<AttendanceScreen>
                       children: [
                         _AttendanceButton(
                           onPressed: taggingNfc,
-                          doAttendance:
-                          todayAttendanceStatus.doAttendance,
+                          doAttendance: todayAttendanceStatus.doAttendance,
                         ),
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -74,8 +105,7 @@ class _AttendanceScreenState extends State<AttendanceScreen>
                         _LeaveButton(
                           onPressed: taggingNfc,
                           doLeave: todayAttendanceStatus.doLeave,
-                          doAttendance:
-                          todayAttendanceStatus.doAttendance,
+                          doAttendance: todayAttendanceStatus.doAttendance,
                         ),
                       ],
                     ),
@@ -91,12 +121,39 @@ class _AttendanceScreenState extends State<AttendanceScreen>
                   ],
                 );
               } else {
-                return Row(
+                return Stack(
                   children: [
-                    ElevatedButton(
-                      onPressed: checkNfc,
-                      child: Text('NFC 활성화'),
-                    )
+                    Column(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        _AttendanceButton(
+                          onPressed: taggingNfc,
+                          doAttendance: todayAttendanceStatus.doAttendance,
+                        ),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            _LoginInfo(loginUser: loginUser),
+                            SizedBox(height: 8.0),
+                            const _TimeInfo(),
+                          ],
+                        ),
+                        _LeaveButton(
+                          onPressed: taggingNfc,
+                          doLeave: todayAttendanceStatus.doLeave,
+                          doAttendance: todayAttendanceStatus.doAttendance,
+                        ),
+                      ],
+                    ),
+                    ValueListenableBuilder(
+                      valueListenable: _isLoading,
+                      builder: (BuildContext context, bool isLoading,
+                          Widget? child) {
+                        return isLoading
+                            ? _loadingProgress()
+                            : SizedBox.shrink();
+                      },
+                    ),
                   ],
                 );
               }
@@ -427,7 +484,10 @@ class _LoginInfo extends StatelessWidget {
           mainAxisSize: MainAxisSize.max,
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Text('${loginUser.name}님', style: textStyle,)
+            Text(
+              '${loginUser.name}님',
+              style: textStyle,
+            )
           ],
         ),
       ),
@@ -459,9 +519,8 @@ class _AttendanceButton extends StatelessWidget {
                     }
                   : onPressed,
               style: OutlinedButton.styleFrom(
-                backgroundColor: doAttendance ? Colors.blue : Colors.white,
-                side: BorderSide(width: 3.0, color: Colors.blue)
-              ),
+                  backgroundColor: doAttendance ? Colors.blue : Colors.white,
+                  side: BorderSide(width: 3.0, color: Colors.blue)),
               child: Text(
                 doAttendance ? '입  실  완  료' : '입  실',
                 style: TextStyle(
@@ -512,7 +571,7 @@ class _LeaveButton extends StatelessWidget {
                 side: BorderSide(width: 3.0, color: Colors.yellow),
               ),
               child: Text(
-                doLeave ? '퇴  실  완  료': "퇴  실",
+                doLeave ? '퇴  실  완  료' : "퇴  실",
                 style: TextStyle(
                   color: Colors.black,
                   fontSize: 50.0,
