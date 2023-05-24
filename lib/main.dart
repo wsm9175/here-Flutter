@@ -19,6 +19,9 @@ void main() async {
   SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
 
   runApp(MaterialApp(
+    builder: (context, child){
+      return MediaQuery(data: MediaQuery.of(context).copyWith(textScaleFactor: 1), child: child!);
+    },
     debugShowCheckedModeBanner: false,
     initialRoute: '/login',
     routes: {
