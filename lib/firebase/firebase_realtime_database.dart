@@ -86,4 +86,11 @@ class FirebaseRealtimeDatabase {
     final ref = _database.ref('userStudent/${LoginUser().uid}');
     return await ref.remove();
   }
+
+  Future<void> changeDeviceUid(String uid,String deviceUid) async{
+    final ref = _database.ref('userStudent/${uid}');
+    return ref.update({
+      'deviceId' : deviceUid,
+    });
+  }
 }

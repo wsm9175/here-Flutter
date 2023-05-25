@@ -152,6 +152,12 @@ class _LoginScreenState extends State<LoginScreen> {
     loginUser.settingUserInfo(value, snapshot.key!);
     print(loginUser.toString());
     _isLoading.value = false;
+    if(loginUser.deviceUid == ''){
+      FirebaseRealtimeDatabase().changeDeviceUid(loginUser.uid, await getDeviceUniqueId());
+      Navigator.pushReplacementNamed(context, '/attendance');
+      return;
+    }
+
     if (loginUser.deviceUid != await getDeviceUniqueId()) {
       FirebaseLogin().signOut();
       showToast('최초 가입한 기기가 아닙니다. 관리자에게 문의해주세요');
